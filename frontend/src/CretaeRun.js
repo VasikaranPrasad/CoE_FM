@@ -4,6 +4,7 @@ import "./CreateRun.css"; // Import your CSS file
 import { useNavigate } from "react-router-dom";
 import Backendapi from "./Backendapi";
 
+
 function CreateRun() {
   const [existingUsernames, setExistingUsernames] = useState([]);
   const [selectedUsername, setSelectedUsername] = useState("");
@@ -20,9 +21,11 @@ function CreateRun() {
 
   const storedSshUsername = sessionStorage.getItem("sshUsername");
   const storedSshPassword = sessionStorage.getItem("sshPassword");
+  
 
   useEffect(() => {
     async function fetchUsernames() {
+      console.log(storedSshUsername, storedSshPassword);
       try {
         const response = await axios.get(
           `${Backendapi.REACT_APP_BACKEND_API_URL}/fetch-usernames`,
@@ -33,6 +36,18 @@ function CreateRun() {
             },
           }
         );
+       
+        
+        // const response = await axios.get(
+        //   `${Backendapi.REACT_APP_BACKEND_API_URL}/fetch-usernames`,
+        //   {
+        //     params: {
+        //       username: sshUsername,
+        //       password: sshPassword,
+        //     },
+        //   }
+        // );
+        
         setExistingUsernames(response.data.usernames);
       } catch (error) {
         console.error("Error fetching usernames:", error);
@@ -42,27 +57,6 @@ function CreateRun() {
     fetchUsernames();
   }, [storedSshUsername, storedSshPassword]);
 
-
-  // const fetchDirectoryTree = async (path = '/') => {
-  //   try {
-  //     setLoading(true);
-  //     const response = await axios.get(
-  //       `http://localhost:443/fetch-directory?path=${encodeURIComponent(path)}`,
-  //       {
-  //         auth: {
-  //           username: storedSshUsername,
-  //           password: storedSshPassword,
-  //         },
-  //       }
-  //     );
-  //     setDirectoryTree(response.data.contents);
-  //     setCurrentPath(path); // Set the current path
-  //     setLoading(false);
-  //   } catch (error) {
-  //     console.error('Error fetching directory tree:', error);
-  //     setLoading(false);
-  //   }
-  // };
 
   const handleUsernameChange = (event) => {
     setSelectedUsername(event.target.value);

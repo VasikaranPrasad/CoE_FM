@@ -14,7 +14,7 @@ function SshCredentials() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      // const response = await axios.post('http://localhost:443/verify-ssh-credentials', {
+     
         const response = await axios.post(`${Backendapi.REACT_APP_BACKEND_API_URL}/verify-ssh-credentials`, {
         username: sshUsername,
         password: sshPassword,
@@ -70,3 +70,10 @@ function SshCredentials() {
 }
 
 export default SshCredentials;
+
+
+
+
+
+
+ // const response = await axios.post('http://localhost:443/verify-ssh-credentials', {
