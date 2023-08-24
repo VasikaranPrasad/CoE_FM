@@ -5,7 +5,7 @@ const fs = require("fs").promises;
 const path = require("path");
 
 const app = express();
-const port = process.env.PORT || 9015;
+const port = process.env.PORT || 9016;
 
 app.use(cors());
 app.use(express.json());
@@ -29,18 +29,18 @@ function executeCommand(conn, command) {
   });
 }
 // Function to create the SSH configuration object
-function createSSHConfig(username, password) {
+function createSSHConfig(Lusername, password) {
   return {
     host: "172.16.90.3", // Replace with your server's IP or hostname
     port: 22,
-    username: username,
+    username: Lusername,
     password: password,
   };
 }
 
 // Route to verify SSH credentials
 app.post("/verify-ssh-credentials", async (req, res) => {
-  const { username, password } = req.body;
+  const { Lusername, password } = req.body;
 
   const conn = new ssh2.Client();
 
@@ -53,15 +53,23 @@ app.post("/verify-ssh-credentials", async (req, res) => {
     res.status(401).json({ success: false });
   });
 
-  const config = createSSHConfig(username, password);
+  const config = createSSHConfig(Lusername, password);
   conn.connect(config);
 });
 
 // Route to fetch usernames
 app.get("/fetch-usernames", async (req, res) => {
-  console.log(req.auth);
-  const { username, password } = req.auth;
+  // console.log(req.headers); 
+  // const { username, password } = req.headers.user;
 
+  const authHeader = req.headers.authorization;   
+  if (!authHeader) {
+      return res.status(401).json({ error: 'Authorization header missing' });
+  }
+
+  const base64Credentials = authHeader.split(' ')[1]; // split "Basic" from the actual encoded string
+  const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8'); // decode the base64 string
+  const [Lusername, password] = credentials.split(':'); // split the string into username and password
   const conn = new ssh2.Client();
 
   conn.on("ready", async () => {
@@ -84,32 +92,43 @@ app.get("/fetch-usernames", async (req, res) => {
     console.error("SSH connection error:", err);
     res.status(500).json({ error: "SSH connection error" });
   });
-  console.log("testing the credientials",username, password);
-  const config = createSSHConfig(username, password);
+  console.log("testing the credientials",Lusername, password);
+  const config = createSSHConfig(Lusername, password);
   conn.connect(config);
 });
 
 // Create directory and run command route
 app.post("/create-directory-and-run", async (req, res) => {
-  const username = req.body.username;
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: "Authorization header missing" });
+  }
+
+  const base64Credentials = authHeader.split(" ")[1];
+  const credentials = Buffer.from(base64Credentials, "base64").toString("utf8");
+  const [Lusername, password] = credentials.split(":");
+
+  const username = req.body.username; // Use a different variable name
   const runName = req.body.runName;
   const userDirectory = `/projects/data/sigmasense/sdc300/users/${username}/${runName}`;
+
+  console.log("User Directory:", userDirectory); // Debugging output
 
   const conn = new ssh2.Client();
 
   conn.on("ready", async () => {
     try {
       // Check if user directory exists
-      const checkDirectoryExists = await executeCommand(
-        conn,
-        `ls ${userDirectory}`
-      );
+      const checkDirectoryExists = await executeCommand(conn, `ls ${userDirectory}`);
+      console.log("Check Directory Exists:", checkDirectoryExists); // Debugging output
 
       if (checkDirectoryExists) {
         res.json({ message: "User directory already exists" });
       } else {
         // Directory doesn't exist, create it
-        await executeCommand(conn, `mkdir -p ${userDirectory}`);
+        const createDirectoryCommand = `mkdir -p ${userDirectory}`;
+        console.log("Create Directory Command:", createDirectoryCommand); // Debugging output
+        await executeCommand(conn, createDirectoryCommand);
         res.json({ message: "User directory and run created successfully" });
       }
     } catch (err) {
@@ -125,19 +144,37 @@ app.post("/create-directory-and-run", async (req, res) => {
     res.status(500).json({ error: "SSH connection error" });
   });
 
-  conn.connect(sshConfigg);
+  const config = createSSHConfig(Lusername, password); // Use credUsername
+  conn.connect(config);
 });
 
 // Add this route to send the default directory path to the frontend
+
 app.get("/default-directory", (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: "Authorization header missing" });
+  }
+
+  const base64Credentials = authHeader.split(" ")[1];
+  const credentials = Buffer.from(base64Credentials, "base64").toString("utf8");
+  const [username, password] = credentials.split(":");
   const defaultPath = "ls /pd/projects/data/sigmasense/sdc300/users"; // Set your default path here
   res.json({ defaultPath });
 });
 
-// Modify the fetch-directory route to use the default path if no path is provided
+
 app.get("/fetch-directory", async (req, res) => {
-  const remoteDirectoryPath =
-    req.query.path || "ls /pd/projects/data/sigmasense/sdc300/users";
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: "Authorization header missing" });
+  }
+
+  const base64Credentials = authHeader.split(" ")[1];
+  const credentials = Buffer.from(base64Credentials, "base64").toString("utf8");
+  const [Lusername, password] = credentials.split(":");
+
+  const remoteDirectoryPath = req.query.path || "ls /pd/projects/data/sigmasense/sdc300/users";
 
   const conn = new ssh2.Client();
 
@@ -160,8 +197,10 @@ app.get("/fetch-directory", async (req, res) => {
     res.status(500).json({ error: "SSH connection error" });
   });
 
-  conn.connect(sshConfigg);
+  const config = createSSHConfig(Lusername, password);
+  conn.connect(config);
 });
+
 
 // ... (file choosing and editing)
 
@@ -209,6 +248,19 @@ app.get("/*", function (req, res) {
 app.listen(port, () => {
   console.log(`Server is running on port: ${port}`);
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ******************************Old basic code*************************
 

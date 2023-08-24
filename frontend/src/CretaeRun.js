@@ -4,7 +4,6 @@ import "./CreateRun.css"; // Import your CSS file
 import { useNavigate } from "react-router-dom";
 import Backendapi from "./Backendapi";
 
-
 function CreateRun() {
   const [existingUsernames, setExistingUsernames] = useState([]);
   const [selectedUsername, setSelectedUsername] = useState("");
@@ -21,22 +20,18 @@ function CreateRun() {
 
   const storedSshUsername = sessionStorage.getItem("sshUsername");
   const storedSshPassword = sessionStorage.getItem("sshPassword");
-  
 
   useEffect(() => {
     async function fetchUsernames() {
-      console.log(storedSshUsername, storedSshPassword);
+      const auth = {
+        username: storedSshUsername,
+        password: storedSshPassword,
+      };
       try {
+        console.log(auth)
         const response = await axios.get(
-          `${Backendapi.REACT_APP_BACKEND_API_URL}/fetch-usernames`,
-          {
-            auth: {
-              username: storedSshUsername,
-              password: storedSshPassword,
-            },
-          }
-        );
-        
+          `${Backendapi.REACT_APP_BACKEND_API_URL}/fetch-usernames`,{auth});
+
         // const response = await axios.get(
         //   `${Backendapi.REACT_APP_BACKEND_API_URL}/fetch-usernames`,
         //   {
@@ -46,7 +41,7 @@ function CreateRun() {
         //     },
         //   }
         // );
-        
+
         setExistingUsernames(response.data.usernames);
       } catch (error) {
         console.error("Error fetching usernames:", error);
@@ -55,7 +50,6 @@ function CreateRun() {
 
     fetchUsernames();
   }, [storedSshUsername, storedSshPassword]);
-
 
   const handleUsernameChange = (event) => {
     setSelectedUsername(event.target.value);
@@ -81,7 +75,9 @@ function CreateRun() {
   const handleEditFile = async () => {
     try {
       const response = await axios.get(
-        `${Backendapi.REACT_APP_BACKEND_API_URL}/fetch-file-content?path=${encodeURIComponent(
+        `${
+          Backendapi.REACT_APP_BACKEND_API_URL
+        }/fetch-file-content?path=${encodeURIComponent(
           currentPath + "/" + selectedFileName
         )}`,
         {
@@ -238,58 +234,6 @@ function CreateRun() {
 }
 
 export default CreateRun;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import React, { useState, useEffect } from "react";
 // import axios from "axios";

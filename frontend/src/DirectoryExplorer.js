@@ -10,14 +10,43 @@ const DirectoryExplorer = () => {
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState('small'); // 'list' or 'small'
 
+
+  const storedSshUsername = sessionStorage.getItem("sshUsername");
+  const storedSshPassword = sessionStorage.getItem("sshPassword");
+
   useEffect(() => {
     fetchDirectoryTree();
   }, []);
 
+  // const fetchDirectoryTree = async (path = '/') => {
+  //   try {
+  //     setLoading(true);
+  //     const response = await fetch(`${Backendapi.REACT_APP_BACKEND_API_URL}/fetch-directory?path=${encodeURIComponent(path)}`);
+  //     const data = await response.json();
+  //     setDirectoryTree(data.contents);
+  //     setCurrentPath(path);
+  //     setLoading(false);
+  //   } catch (error) {
+  //     console.error('Error fetching directory tree:', error);
+  //     setLoading(false);
+  //   }
+  // };
+
+
+
   const fetchDirectoryTree = async (path = '/') => {
     try {
       setLoading(true);
-      const response = await fetch(`${Backendapi.REACT_APP_BACKEND_API_URL}/fetch-directory?path=${encodeURIComponent(path)}`);
+      const auth = `${storedSshUsername}:${storedSshPassword}`; // Use the stored SSH credentials
+      const headers = new Headers({
+        Authorization: `Basic ${btoa(auth)}` // Encode credentials as base64
+      });
+  
+      const response = await fetch(
+        `${Backendapi.REACT_APP_BACKEND_API_URL}/fetch-directory?path=${encodeURIComponent(path)}`,
+        { headers }
+      );
+  
       const data = await response.json();
       setDirectoryTree(data.contents);
       setCurrentPath(path);
@@ -27,6 +56,7 @@ const DirectoryExplorer = () => {
       setLoading(false);
     }
   };
+  
 
   const handleDirectoryClick = (itemName) => {
     const newPath = `${currentPath}/${itemName}`;

@@ -16,7 +16,7 @@ function SshCredentials() {
     try {
      
         const response = await axios.post(`${Backendapi.REACT_APP_BACKEND_API_URL}/verify-ssh-credentials`, {
-        username: sshUsername,
+        Lusername: sshUsername,
         password: sshPassword,
       });
 
