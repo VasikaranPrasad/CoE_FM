@@ -59,8 +59,8 @@ app.post("/verify-ssh-credentials", async (req, res) => {
 
 // Route to fetch usernames
 app.get("/fetch-usernames", async (req, res) => {
-  console.log(req.body);
-  const { username, password } = req.query.auth;
+  console.log(req.auth);
+  const { username, password } = req.auth;
 
   const conn = new ssh2.Client();
 
