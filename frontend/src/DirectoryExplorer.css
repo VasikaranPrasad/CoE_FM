@@ -1,0 +1,66 @@
+.directory-explorer {
+    font-family: Arial, sans-serif;
+  }
+  
+  .directory-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .directory-list li {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    cursor: pointer;
+  }
+  
+  .folder-icon {
+    margin-right: 50px;
+  }
+  
+  .directory-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .list li {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    cursor: pointer;
+  }
+  
+  .small li {
+    display: inline-block;
+    margin: 5px;
+    cursor: pointer;
+  }
+  
+  .folder-icon {
+    margin-right: 10px;
+  }
+
+  .directory-explorer {
+    position: relative;
+  }
+  
+  .toggle-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+
+  /* Update the .list li styling in your DirectoryExplorer.css file */
+.list li {
+  display: flex;
+  align-items: center;
+  margin: 8px 0; /* Increase the margin for more space */
+  cursor: pointer;
+}
+
+
+.folder-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

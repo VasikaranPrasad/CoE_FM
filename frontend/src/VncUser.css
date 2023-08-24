@@ -1,0 +1,17 @@
+/* VncUser.css */
+
+/* Style the form container and left-sidebar */
+.form-container {
+  padding: 10px;
+}
+
+.left-sidebar {
+  width: 10px;
+  height: 50px; /* Adjust this width as needed */
+  float: right;
+}
+
+/* Clear float for the main content */
+.main-content {
+  overflow: hidden;
+}
