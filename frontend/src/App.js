@@ -5,6 +5,8 @@ import Welcome from './Welcome';
 import CreateRun from './CretaeRun';
 import SshCredentials from './SshCredentials';
 import DirectoryExplorer from './DirectoryExplorer';
+import FileEditor from './FileEditor';
+import FileViewer from './FileViewer';
 
 
 
@@ -17,6 +19,8 @@ function App() {
     <Route path='createrun' element={<CreateRun />} />
     <Route path='/' element={<SshCredentials />} />
     <Route path='DirectoryExplorer' element={<DirectoryExplorer />} />
+    <Route path='/fileeditor' element={<FileEditor />} />
+    <Route path='/fileViewer' element={<FileViewer />} />
    </Routes>
    </BrowserRouter>
   );

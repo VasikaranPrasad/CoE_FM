@@ -17,6 +17,7 @@ function CreateRun() {
   const [loading, setLoading] = useState(false); // Define loading state
   const [directoryTree, setDirectoryTree] = useState([]); // Define directoryTree state
   const navigate = useNavigate();
+  const [selectedRunName, setSelectedRunName] = useState("");
 
   const storedSshUsername = sessionStorage.getItem("sshUsername");
   const storedSshPassword = sessionStorage.getItem("sshPassword");
@@ -28,19 +29,11 @@ function CreateRun() {
         password: storedSshPassword,
       };
       try {
-        console.log(auth)
+        console.log(auth);
         const response = await axios.get(
-          `${Backendapi.REACT_APP_BACKEND_API_URL}/fetch-usernames`,{auth});
-
-        // const response = await axios.get(
-        //   `${Backendapi.REACT_APP_BACKEND_API_URL}/fetch-usernames`,
-        //   {
-        //     params: {
-        //       username: sshUsername,
-        //       password: sshPassword,
-        //     },
-        //   }
-        // );
+          `${Backendapi.REACT_APP_BACKEND_API_URL}/fetch-usernames`,
+          { auth }
+        );
 
         setExistingUsernames(response.data.usernames);
       } catch (error) {
@@ -147,6 +140,38 @@ function CreateRun() {
     }
   };
 
+  const handleCopyFile = async () => {
+    try {
+      setLoading(true);
+      const auth = `${storedSshUsername}:${storedSshPassword}`;
+      const headers = new Headers({
+        Authorization: `Basic ${btoa(auth)}`,
+        "Content-Type": "application/json",
+      });
+
+      const response = await fetch(
+        `${Backendapi.REACT_APP_BACKEND_API_URL}/copy-file`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            username: newUsername || selectedUsername,
+            runName: runName,
+            fileName: selectedFileName,
+          }),
+        }
+      );
+
+      const data = await response.json();
+      setMessage(data.message);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error copying file:", error);
+      setMessage("An error occurred while copying the file.");
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="container">
       <h1>Create Directory and Run</h1>
@@ -221,6 +246,9 @@ function CreateRun() {
               ></textarea>
             </label>
             <button onClick={handleSaveFile}>Save</button>
+            <div className="button-container">
+              <button onClick={handleCopyFile}>Copy File</button>
+            </div>
           </>
         )}
         <br />

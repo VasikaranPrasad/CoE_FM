@@ -77,6 +77,7 @@ app.get("/fetch-usernames", async (req, res) => {
       const usernames = await executeCommand(
         conn,
         "ls /pd/projects/data/sigmasense/sdc300/users"
+        // "ls /home"
       );
       const usernamesArray = usernames.split("\n");
       res.json({ usernames: usernamesArray });
@@ -98,6 +99,7 @@ app.get("/fetch-usernames", async (req, res) => {
 });
 
 // Create directory and run command route
+
 app.post("/create-directory-and-run", async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -111,6 +113,7 @@ app.post("/create-directory-and-run", async (req, res) => {
   const username = req.body.username; // Use a different variable name
   const runName = req.body.runName;
   const userDirectory = `/projects/data/sigmasense/sdc300/users/${username}/${runName}`;
+  // const userDirectory = `/home/${username}/${runName}`;
 
   console.log("User Directory:", userDirectory); // Debugging output
 
@@ -148,6 +151,50 @@ app.post("/create-directory-and-run", async (req, res) => {
   conn.connect(config);
 });
 
+
+// Add a new route to copy the file
+app.post("/copy-file", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: "Authorization header missing" });
+  }
+
+  const base64Credentials = authHeader.split(" ")[1];
+  const credentials = Buffer.from(base64Credentials, "base64").toString("utf8");
+  const [Lusername, password] = credentials.split(":");
+
+  const username = req.body.username;
+  const runName = req.body.runName;
+  const fileName = req.body.fileName; // Name of the selected file
+  // const targetDirectory = `/home/${username}/${runName}`; // New directory
+  const targetDirectory = `/projects/data/sigmasense/sdc300/users/${username}/${runName}`;
+
+  const conn = new ssh2.Client();
+
+  conn.on("ready", async () => {
+    try {
+      // Read the file content
+      const fileContent = await executeCommand(conn, `cat /projects/data/sigmasense/sdc300/users/${username}/${fileName}`);
+      // Write the file content to the new directory
+      await executeCommand(conn, `echo "${fileContent}" > ${targetDirectory}/${fileName}`);
+      res.json({ message: "File copied successfully" });
+    } catch (err) {
+      console.error("Error copying file:", err);
+      res.status(500).json({ error: "Failed to copy file" });
+    } finally {
+      conn.end(); // Close the SSH connection
+    }
+  });
+
+  conn.on("error", (err) => {
+    console.error("SSH connection error:", err);
+    res.status(500).json({ error: "SSH connection error" });
+  });
+
+  const config = createSSHConfig(Lusername, password);
+  conn.connect(config);
+});
+
 // Add this route to send the default directory path to the frontend
 
 app.get("/default-directory", (req, res) => {
@@ -160,6 +207,7 @@ app.get("/default-directory", (req, res) => {
   const credentials = Buffer.from(base64Credentials, "base64").toString("utf8");
   const [username, password] = credentials.split(":");
   const defaultPath = "ls /pd/projects/data/sigmasense/sdc300/users"; // Set your default path here
+  // const defaultPath = "ls /home"; // Set your default path here
   res.json({ defaultPath });
 });
 
@@ -175,7 +223,7 @@ app.get("/fetch-directory", async (req, res) => {
   const [Lusername, password] = credentials.split(":");
 
   const remoteDirectoryPath = req.query.path || "ls /pd/projects/data/sigmasense/sdc300/users";
-
+  // const remoteDirectoryPath = req.query.path || "ls /home";
   const conn = new ssh2.Client();
 
   conn.on("ready", async () => {
@@ -202,28 +250,48 @@ app.get("/fetch-directory", async (req, res) => {
 });
 
 
-// ... (file choosing and editing)
+function validateFilePath(req, res, next) {
+  const filePath = req.query.path || req.body.path;
 
-app.get("/fetch-file-content", async (req, res) => {
+  if (!filePath || filePath.includes('..') || !filePath.startsWith('/')) {
+    return res.status(400).json({ error: 'Invalid file path' });
+  }
+
+  // Add additional checks as needed
+
+  req.filePath = filePath;
+  next();
+}
+
+
+
+app.get('/fetch-file-content', async (req, res) => {
   const filePath = req.query.path;
   try {
-    const content = await executeCommand(conn, `cat ${filePath}`);
-    res.json({ content });
-  } catch (err) {
-    console.error("Error fetching file content:", err);
-    res.status(500).json({ error: "Failed to fetch file content" });
+    const stats = await fs.stat(filePath);
+    if (stats.isFile()) {
+      const content = await fs.readFile(filePath, 'utf-8');
+      res.json({ content });
+    } else {
+      res.status(400).json({ error: 'Path is a directory' });
+    }
+  } catch (error) {
+    console.error('Error fetching file content:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-app.post("/save-file", async (req, res) => {
+
+app.post('/save-file', validateFilePath, async (req, res) => {
   const filePath = req.body.path;
   const content = req.body.content;
+
   try {
-    await executeCommand(conn, `echo "${content}" > ${filePath}`);
-    res.json({ message: "File saved successfully" });
+    await fs.writeFile(filePath, content, 'utf8'); // Write file content
+    res.json({ message: 'File saved successfully' });
   } catch (err) {
-    console.error("Error saving file:", err);
-    res.status(500).json({ error: "Failed to save file" });
+    console.error('Error saving file:', err);
+    res.status(500).json({ error: 'Failed to save file' });
   }
 });
 
